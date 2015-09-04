@@ -1,5 +1,8 @@
 import copy
 
+__version__ = (0, 0, 1)
+
+
 class Backend(object):
     """ Indirect graph whose nodes are either `hubs` or `nodes`. It is not
     possible to connect nodes together.
@@ -18,7 +21,7 @@ class Backend(object):
             self._unknown_hub(hub)
         connected_hubs = []
         for node in self.__links[hub]:
-            if not node in self.__hubs:
+            if node not in self.__hubs:
                 raise Exception("Cannot remove hub with connected nodes")
             connected_hubs.append(node)
         for connected_hub in connected_hubs:
@@ -100,7 +103,7 @@ class HubDispatch(object):
         self._topology = {
             'nodes': {
             },
-            'hubs' {
+            'hubs': {
             },
         }
 
@@ -130,7 +133,7 @@ class HubDispatch(object):
         if not any(candidates):
             return
         current_hub = self._typology['nodes'].get(node)
-        if current_hub is not None
+        if current_hub is not None:
             if current_hub in candidates:
                 return
             assert current_hub in black_list
@@ -155,7 +158,7 @@ class HubDispatch(object):
     def _least_loaded(self, c1, c2):
         c1_load = self._topology['hubs'].get(c1, 0)
         c2_load = self._topology['hubs'].get(c2, 0)
-        if c1 <= c2:
+        if c1_load <= c2_load:
             return c1
         else:
             return c2
