@@ -1,9 +1,9 @@
 # Hub-Dispatch
 
-[![Build Status](https://travis-ci.org/cogniteev/docido-python-sdk.svg)](https://travis-ci.org/cogniteev/docido-python-sdk)
-[![Coverage Status](https://coveralls.io/repos/cogniteev/docido-python-sdk/badge.svg?branch=master&service=github)](https://coveralls.io/github/cogniteev/docido-python-sdk?branch=master)
-[![Code Climate](https://codeclimate.com/github/cogniteev/docido-python-sdk/badges/gpa.svg)](https://codeclimate.com/github/cogniteev/docido-python-sdk)
-[![Code Health](https://landscape.io/github/cogniteev/docido-python-sdk/master/landscape.svg?style=plastic)](https://landscape.io/github/cogniteev/docido-python-sdk/master)
+[![Build Status](https://travis-ci.org/cogniteev/hub-dispatch.svg)](https://travis-ci.org/cogniteev/hub-dispatch)
+[![Coverage Status](https://coveralls.io/repos/cogniteev/hub-dispatch/badge.svg?branch=master&service=github)](https://coveralls.io/github/cogniteev/hub-dispatch?branch=master)
+[![Code Climate](https://codeclimate.com/github/cogniteev/hub-dispatch/badges/gpa.svg)](https://codeclimate.com/github/cogniteev/hub-dispatch)
+[![Code Health](https://landscape.io/github/cogniteev/hub-dispatch/master/landscape.svg?style=plastic)](https://landscape.io/github/cogniteev/hub-dispatch/master)
 
 # Installation
 
