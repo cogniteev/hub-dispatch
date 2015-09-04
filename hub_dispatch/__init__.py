@@ -15,36 +15,42 @@ class Backend(object):
         if hub in self.__hubs:
             raise Exception("Hub '{}' already exists".format(hub))
         self.__hubs.add(hub)
+        assert hub not in self.__links, "node should not be in __links"
+        self.__links[hub] = set()
+        return self
 
     def remove_hub(self, hub):
         if hub not in self.__hubs:
             self._unknown_hub(hub)
         connected_hubs = []
-        for node in self.__links[hub]:
+        for node in self.__links.get(hub, []):
             if node not in self.__hubs:
-                raise Exception("Cannot remove hub with connected nodes")
+                raise Exception("Can't remove hub with connected nodes")
             connected_hubs.append(node)
         for connected_hub in connected_hubs:
             self.unlink(hub, connected_hub)
         self.__hubs.remove(hub)
+        return self
 
     def link(self, hub, node):
         if hub == node:
-            raise Exception("Node cannot be connected to itself")
+            raise Exception("Hub can't be linked to itself")
         if hub not in self.__hubs:
             self._unknown_hub(hub)
         nodes = self._links(hub)
         if node in nodes:
-            raise Exception("Hub '{}' is already connect to node '{}'".format(
+            error_message = "Hub '{}' is already connected to node '{}'"
+            raise Exception(error_message.format(
                 hub,
                 node
             ))
         nodes.add(node)
-        nodes = self._link(node).add(hub)
+        nodes = self._links(node).add(hub)
+        return self
 
     def unlink(self, hub, node):
         if hub not in self.__hubs:
-            self._unknown_hub()
+            self._unknown_hub(hub)
         nodes = self._links(hub)
         if node not in nodes:
             raise Exception("Hub '{}' is not connected to node '{}'".format(
@@ -52,22 +58,22 @@ class Backend(object):
                 node
             ))
         nodes.remove(node)
-        if not any(nodes):
-            self.__links.remove(node)
-        # update links of connected node
-        nodes = self.__links(node)
+        nodes = self._links(node)
         nodes.remove(hub)
         if not any(nodes):
-            self.__links.remove(node)
+            self.__links.pop(node)
+        return self
 
     def _links(self, node):
         return self.__links.setdefault(node, set())
 
     def links(self, node):
+        if node not in self.__links:
+            raise Exception("Unknown node '{}'".format(node))
         return copy.deepcopy(self._links(node))
 
     def _unknown_hub(self, hub):
-        raise Exception("Hub '{}' doe not exist".format(hub))
+        raise Exception("Hub '{}' does not exist".format(hub))
 
     def hubs(self):
         return copy.copy(self.__hubs)
