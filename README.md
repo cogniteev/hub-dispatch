@@ -13,5 +13,5 @@ $ pip install hub-dispatch
 
 # License
 
-Docido python SDK is licensed under the Apache License, Version 2.0.
+Hub-Dispatch is licensed under the Apache License, Version 2.0.
 See [LICENSE](LICENSE) file for full license text.
