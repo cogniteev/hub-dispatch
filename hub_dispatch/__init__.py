@@ -3,13 +3,18 @@ import copy
 __version__ = (0, 0, 1)
 
 
-class Backend(object):
+class GraphBackend(object):
     """ Indirect graph whose nodes are either `hubs` or `nodes`. It is not
     possible to connect nodes together.
     """
-    def __init__(self):
-        self.__hubs = set()
-        self.__links = {}
+    def __init__(self, hubs=None, links=None):
+        """ Create a new graph
+
+        :param set hubs: predefined hubs
+        :param dict links: nodes connection: node -> set([node, ...])
+        """
+        self.__hubs = hubs or set()
+        self.__links = links or {}
 
     def add_hub(self, hub):
         if hub in self.__hubs:
@@ -71,6 +76,11 @@ class Backend(object):
         if node not in self.__links:
             raise Exception("Unknown node '{}'".format(node))
         return copy.deepcopy(self._links(node))
+
+    def hub_links(self, hub):
+        if not self.is_hub(hub):
+            self._unknown_hub(hub)
+        return self.links(hub)
 
     def _unknown_hub(self, hub):
         raise Exception("Hub '{}' does not exist".format(hub))
