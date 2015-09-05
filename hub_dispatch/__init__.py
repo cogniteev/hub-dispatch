@@ -180,16 +180,19 @@ class HubDispatch(object):
                 self._reassign(node, other_hubs, [hub])
                 assert self._topology.nodes[node] != hub
             else:
-                assignee = self._topology.hubs[hub]
-                assert assignee > 0, "should not have less than 1 assignee"
-                if assignee == 1:
-                    self._topology.hubs.pop(hub)
-                else:
-                    self._topology.hubs[hub] = assignee - 1
+                self._decr_hub(hub)
                 self._topology.nodes.pop(node)
                 self._changes.unassign(hub, node)
         self._graph.unlink(hub, node)
         return self
+
+    def _decr_hub(self, hub):
+        assignee = self._topology.hubs[hub]
+        assert assignee > 0, "should not have less than 1 assignee"
+        if assignee == 1:
+            self._topology.hubs.pop(hub)
+        else:
+            self._topology.hubs[hub] = assignee - 1
 
     def _reassign(self, node, candidates, black_list=[]):
         assert any(candidates), "there should be assignment candidates"
@@ -215,11 +218,7 @@ class HubDispatch(object):
         self._topology.nodes[node] = hub
         self._topology.hubs[hub] = assignees + 1
         if current_hub is not None:
-            nodes = self._topology.hubs.get(current_hub, 0)
-            if nodes == 1:
-                self._topology.hubs.pop(current_hub)
-            else:
-                self._topology.hubs[current_hub] = nodes - 1
+            self._decr_hub(current_hub)
             self._changes.unassign(current_hub, node)
         self._changes.assign(hub, node)
 
