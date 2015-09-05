@@ -33,8 +33,6 @@ class GraphBackend(object):
             if node not in self.__hubs:
                 raise Exception("Can't remove hub with connected nodes")
             connected_hubs.append(node)
-        for connected_hub in connected_hubs:
-            self.unlink(hub, connected_hub)
         self.__hubs.remove(hub)
         return self
 

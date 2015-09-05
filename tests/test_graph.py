@@ -87,14 +87,31 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(g.hub_links('h1'), set(['h2', 'h3']))
         self.assertEqual(g.hub_links('h2'), set(['h1', 'h3']))
         self.assertEqual(g.hub_links('h3'), set(['h1', 'h2']))
+        # unpromote a hub to a simple node
         g.remove_hub('h1')
         self.assertFalse('h1' in g.hubs())
+        self.assertEqual(g.links('h1'), set(['h2', 'h3']))
+        self.assertEqual(g.links('h2'), set(['h1', 'h3']))
+        self.assertEqual(g.links('h3'), set(['h1', 'h2']))
+        with self.assertRaises(Exception) as exc:
+            g.hub_links('h1')
+        self.assertEqual(
+            exc.exception.message,
+            "Hub 'h1' does not exist"
+        )
+        self.assertEqual(g.hub_links('h2'), set(['h1', 'h3']))
+        self.assertEqual(g.hub_links('h3'), set(['h1', 'h2']))
+        # unpromote h2 to a simple node
+        g.unlink('h2', 'h1')
+        g.remove_hub('h2')
+        self.assertFalse('h1' in g.hubs())
+        self.assertFalse('h2' in g.hubs())
+        self.assertTrue('h3' in g.hubs())
+        self.assertEqual(g.links('h1'), set(['h3']))
         self.assertEqual(g.links('h2'), set(['h3']))
-        self.assertEqual(g.links('h3'), set(['h2']))
-        self.assertEqual(g.hub_links('h2'), set(['h3']))
-        self.assertEqual(g.hub_links('h3'), set(['h2']))
+        self.assertEqual(g.links('h3'), set(['h1', 'h2']))
 
-    def test_add_link(self):
+    def test_add_node_link(self):
         g = GraphBackend()
         g.add_hub('foo')
         with self.assertRaises(Exception) as exc:
@@ -121,6 +138,27 @@ class TestGraph(unittest.TestCase):
             "Hub 'foo' is already connected to node 'bar'"
         )
 
+    def test_add_hub_link(self):
+        g = GraphBackend().add_hub('foo', 'bar').link('foo', 'bar')
+        self.assertTrue(g.is_hub('foo'))
+        self.assertTrue(g.is_hub('bar'))
+        self.assertEquals(g.links('foo'), set(['bar']))
+        self.assertEquals(g.hub_links('foo'), set(['bar']))
+        self.assertEquals(g.links('bar'), set(['foo']))
+        self.assertEquals(g.hub_links('bar'), set(['foo']))
+        with self.assertRaises(Exception) as exc:
+            g.link('foo', 'bar')
+        self.assertEquals(
+            exc.exception.message,
+            "Hub 'foo' is already connected to node 'bar'"
+        )
+        with self.assertRaises(Exception) as exc:
+            g.link('bar', 'foo')
+        self.assertEquals(
+            exc.exception.message,
+            "Hub 'bar' is already connected to node 'foo'"
+        )
+
     def test_remove_node_link(self):
         g = GraphBackend()
         g.add_hub('foo')
@@ -138,6 +176,14 @@ class TestGraph(unittest.TestCase):
         self.assertFalse(g.is_hub('bar'))
         self.assertEqual(g.hubs(), set(['foo']))
         self.assertEqual(g.links('foo'), set())
+
+    def test_remove_hub_link(self):
+        g = GraphBackend().add_hub('foo', 'bar').link('foo', 'bar')
+        g.remove_hub('bar')
+        self.assertTrue(g.is_hub('foo'))
+        self.assertFalse(g.is_hub('bar'))
+        self.assertEqual(g.hubs(), set(['foo']))
+        self.assertEqual(g.links('foo'), set(['bar']))
 
     def test_remove_node_link_with_several_hubs(self):
         g = GraphBackend()\
