@@ -16,12 +16,13 @@ class GraphBackend(object):
         self.__hubs = hubs or set()
         self.__links = links or {}
 
-    def add_hub(self, hub):
-        if hub in self.__hubs:
-            raise Exception("Hub '{}' already exists".format(hub))
-        self.__hubs.add(hub)
-        assert hub not in self.__links, "node should not be in __links"
-        self.__links[hub] = set()
+    def add_hub(self, *hubs):
+        for hub in hubs:
+            if hub in self.__hubs:
+                raise Exception("Hub '{}' already exists".format(hub))
+            self.__hubs.add(hub)
+            assert hub not in self.__links, "node should not be in __links"
+            self.__links[hub] = set()
         return self
 
     def remove_hub(self, hub):
