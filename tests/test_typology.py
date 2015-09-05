@@ -156,6 +156,13 @@ class TestTypology(unittest.TestCase):
         self.assertEqual(h._changes.assignments, [('h2', 'n1')])
         self.assertEqual(h._changes.unassignments, [('h1', 'n1')])
 
+    def test_least_loaded_func(self):
+        h = HubDispatch()
+        h._topology.hubs['foo'] = 0
+        h._topology.hubs['bar'] = 42
+        self.assertEqual('foo', h._least_loaded('foo', 'bar'))
+        self.assertEqual('foo', h._least_loaded('bar', 'foo'))
+
 
 if __name__ == '__main__':
     unittest.main()
