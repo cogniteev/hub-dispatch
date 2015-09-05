@@ -167,14 +167,9 @@ class HubDispatch(object):
 
     def unlink(self, hub, node):
         if node not in self._graph.hub_links(hub):
-            raise Exception("Hub '{}' is not connected to node '{}'".format(
-                hub,
-                node
-            ))
-        other_hubs = filter(
-            lambda h: h != hub,
-            self._graph.links(node)
-        )
+            error_message = "Hub '{}' is not connected to node '{}'"
+            raise Exception(error_message.format(hub, node))
+        other_hubs = filter(lambda h: h != hub, self._graph.links(node))
         if self._topology.nodes[node] == hub:
             if any(other_hubs):
                 self._reassign(node, other_hubs, [hub])
