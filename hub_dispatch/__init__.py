@@ -135,17 +135,17 @@ class TypologyChange(object):
 
 
 class HubDispatch(object):
-    def __init__(self, graph_cls=GraphBackend, graph_kwargs=None,
-                 typology_cls=TypologyBackend, typology_kwargs=None,
-                 typology_change_cls=TypologyChange,
-                 typology_change_kwargs=None,
-                 max_nodes_per_hub=100):
-        self._graph = graph_cls(**(graph_kwargs or {}))
-        self._topology = typology_cls(**(typology_kwargs or {}))
-        self._changes = typology_change_cls(
-            **(typology_change_kwargs or {})
-        )
-        self._max_nodes_per_hub = max_nodes_per_hub
+    def __init__(self, **kwargs):
+        graph_cls = kwargs.get('graph_cls', GraphBackend)
+        graph_kwargs = kwargs.get('graph_kwargs', {})
+        typology_cls = kwargs.get('typology_cls', TypologyBackend)
+        typology_kwargs = kwargs.get('typology_kwargs', {})
+        typology_change_cls = kwargs.get('typology_change_cls', TypologyChange)
+        typology_change_kwargs = kwargs.get('typology_change_kwargs', {})
+        self._graph = graph_cls(**graph_kwargs)
+        self._topology = typology_cls(**typology_kwargs)
+        self._changes = typology_change_cls(**typology_change_kwargs)
+        self._max_nodes_per_hub = kwargs.get('max_nodes_per_hub', 100)
 
     def add_hub(self, *hubs):
         for hub in hubs:
