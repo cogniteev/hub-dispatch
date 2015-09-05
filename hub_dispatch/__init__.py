@@ -4,8 +4,8 @@ __version__ = (0, 0, 1)
 
 
 class GraphBackend(object):
-    """ Indirect graph whose nodes are either `hubs` or `nodes`. It is not
-    possible to connect nodes together.
+    """ Indirect graph whose nodes are either `hubs` or `nodes`.
+    It is not possible to connect nodes together.
     """
     def __init__(self, hubs=None, links=None):
         """ Create a new graph
@@ -21,19 +21,21 @@ class GraphBackend(object):
             if hub in self.__hubs:
                 raise Exception("Hub '{}' already exists".format(hub))
             self.__hubs.add(hub)
-            assert hub not in self.__links, "node should not be in __links"
-            self.__links[hub] = set()
+            self.__links.setdefault(hub, set())
         return self
 
     def remove_hub(self, hub):
         if hub not in self.__hubs:
             self._unknown_hub(hub)
-        connected_hubs = []
-        for node in self.__links.get(hub, []):
+        remove_hub = True
+        for node in self.__links.get(hub, set()):
             if node not in self.__hubs:
                 raise Exception("Can't remove hub with connected nodes")
-            connected_hubs.append(node)
+            elif hub in self.__links.get(node, set()):
+                remove_hub = False
         self.__hubs.remove(hub)
+        if remove_hub:
+            self.__links.pop(hub)
         return self
 
     def link(self, hub, node):
@@ -44,12 +46,10 @@ class GraphBackend(object):
         nodes = self._links(hub)
         if node in nodes:
             error_message = "Hub '{}' is already connected to node '{}'"
-            raise Exception(error_message.format(
-                hub,
-                node
-            ))
+            raise Exception(error_message.format(hub, node))
         nodes.add(node)
-        nodes = self._links(node).add(hub)
+        if not self.is_hub(node):
+            self._links(node).add(hub)
         return self
 
     def unlink(self, hub, node):
@@ -57,15 +57,14 @@ class GraphBackend(object):
             self._unknown_hub(hub)
         nodes = self._links(hub)
         if node not in nodes:
-            raise Exception("Hub '{}' is not connected to node '{}'".format(
-                hub,
-                node
-            ))
+            error_message = "Hub '{}' is not connected to node '{}'"
+            raise Exception(error_message.format(hub, node))
+        if not self.is_hub(node):
+            node_hubs = self._links(node)
+            node_hubs.remove(hub)
+            if len(node_hubs) == 0:
+                self.__links.pop(node)
         nodes.remove(node)
-        nodes = self._links(node)
-        nodes.remove(hub)
-        if not any(nodes):
-            self.__links.pop(node)
         return self
 
     def _links(self, node):
@@ -91,27 +90,7 @@ class GraphBackend(object):
         return hub in self.__hubs
 
 
-# def kruskall(g):
-#     hubs = g.hubs()
-#     all_hubs = g.hubs()
-#     cfcs = []
-#     while any(hubs):
-#         cfc = GraphBackend()
-#         cfc_hubs = [hubs.pop()]
-#         while any(cfc_hubs):
-#             hub = cfc_hubs.pop()
-#             cfc.add_hub(hub)
-#             for node in cfc.links(hub):
-#                 if node in all_hubs:
-#                     cfc.add_hub(node)
-#                     hubs.remove(hub)
-#                     cfc_hubs.add(hub)
-#                 cfc.link(hub, node)
-#         cfcs.append(cfc)
-#     return cfcs
-
-
-class TypologyBackend(object):
+class TopologyBackend(object):
     def __init__(self, nodes=None, hubs=None):
         """ Typology of node assignments among available hubs
         """
@@ -119,7 +98,7 @@ class TypologyBackend(object):
         self.hubs = hubs or {}
 
 
-class TypologyChange(object):
+class TopologyChange(object):
     def __init__(self, **kwargs):
         self._clear()
 
@@ -138,31 +117,41 @@ class HubDispatch(object):
     def __init__(self, **kwargs):
         graph_cls = kwargs.get('graph_cls', GraphBackend)
         graph_kwargs = kwargs.get('graph_kwargs', {})
-        typology_cls = kwargs.get('typology_cls', TypologyBackend)
-        typology_kwargs = kwargs.get('typology_kwargs', {})
-        typology_change_cls = kwargs.get('typology_change_cls', TypologyChange)
-        typology_change_kwargs = kwargs.get('typology_change_kwargs', {})
+        topology_cls = kwargs.get('topology_cls', TopologyBackend)
+        topology_kwargs = kwargs.get('topology_kwargs', {})
+        topology_change_cls = kwargs.get(
+            'topology_change_cls', TopologyChange
+        )
+        topology_change_kwargs = kwargs.get('topology_change_kwargs', {})
         self._graph = graph_cls(**graph_kwargs)
-        self._topology = typology_cls(**typology_kwargs)
-        self._changes = typology_change_cls(**typology_change_kwargs)
+        self._topology = topology_cls(**topology_kwargs)
+        self._changes = topology_change_cls(**topology_change_kwargs)
         self._max_nodes_per_hub = kwargs.get('max_nodes_per_hub', 100)
 
     def add_hub(self, *hubs):
         for hub in hubs:
             self._graph.add_hub(hub)
+            if hub not in self._topology.nodes:
+                self._assign(hub, hub)
         return self
 
     def remove_hub(self, hub):
+        if self._topology.nodes.get(hub) == hub:
+            self._decr_hub(hub)
+            self._topology.nodes.pop(hub)
+            self._changes.unassign(hub, hub)
+            # FIXME assign to somebody else if followed
         for node in self._graph.hub_links(hub):
-            if not self._graph.is_hub(node):
-                self.unlink(hub, node)
+            print '> unlink(%r, %r)' % (hub, node)
+            self.unlink(hub, node)
         self._graph.remove_hub(hub)
 
     def link(self, hub, *nodes):
         for node in nodes:
             self._graph.link(hub, node)
-            if node not in self._topology.nodes:
-                self._assign(node, hub)
+            if not self._graph.is_hub(node):
+                if node not in self._topology.nodes:
+                    self._assign(node, hub)
         return self
 
     def unlink(self, hub, node):

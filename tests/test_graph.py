@@ -64,30 +64,59 @@ class TestGraph(unittest.TestCase):
             "Hub 'foo' does not exist"
         )
 
+    def test_unfollow(self):
+        g = GraphBackend().add_hub('h1', 'h2').link('h1', 'h2')
+        self.assertEqual(g.links('h1'), set(['h2']))
+        self.assertEqual(g.links('h2'), set())
+        self.assertTrue(g.is_hub('h1'))
+        self.assertTrue(g.is_hub('h2'))
+        g.unlink('h1', 'h2')
+        self.assertEqual(g.links('h1'), set())
+        self.assertEqual(g.links('h2'), set())
+        self.assertTrue(g.is_hub('h1'))
+        self.assertTrue(g.is_hub('h2'))
+
+    def test_follow_follower(self):
+        g = GraphBackend().add_hub('h1', 'h2').link('h1', 'h2')
+        self.assertEqual(g.links('h1'), set(['h2']))
+        self.assertEqual(g.links('h2'), set())
+        self.assertTrue(g.is_hub('h1'))
+        self.assertTrue(g.is_hub('h2'))
+        g.link('h2', 'h1')
+        self.assertEqual(g.links('h1'), set(['h2']))
+        self.assertEqual(g.links('h2'), set(['h1']))
+        self.assertTrue(g.is_hub('h1'))
+        self.assertTrue(g.is_hub('h2'))
+
     def test_remove_hub_with_linked_hubs(self):
-        g = GraphBackend()\
-            .add_hub('h1').add_hub('h2').add_hub('h3')\
+        g = GraphBackend().add_hub('h1', 'h2', 'h3')\
             .link('h1', 'h2').link('h1', 'h3').link('h2', 'h3')
         self.assertEqual(g.hub_links('h1'), set(['h2', 'h3']))
-        self.assertEqual(g.hub_links('h2'), set(['h1', 'h3']))
-        self.assertEqual(g.hub_links('h3'), set(['h1', 'h2']))
-        g.remove_hub('h1')  # unpromote a hub to a simple node
+        self.assertEqual(g.hub_links('h2'), set(['h3']))
+        self.assertEqual(g.hub_links('h3'), set())
+        g.remove_hub('h1')  # remove node because nobody follows it
         self.assertFalse('h1' in g.hubs())
-        self.assertEqual(g.links('h1'), set(['h2', 'h3']))
-        self.assertEqual(g.links('h2'), set(['h1', 'h3']))
-        self.assertEqual(g.links('h3'), set(['h1', 'h2']))
+        with self.assertRaises(Exception) as exc:
+            g.links('h1')
+        self.assertEqual(exc.exception.message, "Unknown node 'h1'")
+        self.assertEqual(g.links('h2'), set(['h3']))
+        self.assertEqual(g.links('h3'), set())
         with self.assertRaises(Exception) as exc:
             g.hub_links('h1')
         self.assertEqual(exc.exception.message, "Hub 'h1' does not exist")
-        self.assertEqual(g.hub_links('h2'), set(['h1', 'h3']))
-        self.assertEqual(g.hub_links('h3'), set(['h1', 'h2']))
-        g.unlink('h2', 'h1').remove_hub('h2')  # unpromote h2 to a simple node
-        self.assertFalse('h1' in g.hubs())
-        self.assertFalse('h2' in g.hubs())
+        g.unlink('h2', 'h3')
+        self.assertTrue('h2' in g.hubs())
         self.assertTrue('h3' in g.hubs())
-        self.assertEqual(g.links('h1'), set(['h3']))
-        self.assertEqual(g.links('h2'), set(['h3']))
-        self.assertEqual(g.links('h3'), set(['h1', 'h2']))
+        self.assertEqual(g.links('h2'), set())
+        self.assertEqual(g.links('h3'), set())
+
+    def test_remove_hub_followed_by_others(self):
+        g = GraphBackend().add_hub('h1', 'h2')\
+            .link('h1', 'h2').link('h2', 'h1')
+        g.remove_hub('h1')
+        self.assertFalse(g.is_hub('h1'))
+        self.assertTrue(g.is_hub('h2'))
+        self.assertEqual(g.links('h2'), set(['h1']))
 
     def test_add_node_link(self):
         g = GraphBackend()
@@ -122,20 +151,19 @@ class TestGraph(unittest.TestCase):
         self.assertTrue(g.is_hub('bar'))
         self.assertEquals(g.links('foo'), set(['bar']))
         self.assertEquals(g.hub_links('foo'), set(['bar']))
-        self.assertEquals(g.links('bar'), set(['foo']))
-        self.assertEquals(g.hub_links('bar'), set(['foo']))
+        self.assertEquals(g.links('bar'), set())
+        self.assertEquals(g.hub_links('bar'), set())
         with self.assertRaises(Exception) as exc:
             g.link('foo', 'bar')
         self.assertEquals(
             exc.exception.message,
             "Hub 'foo' is already connected to node 'bar'"
         )
-        with self.assertRaises(Exception) as exc:
-            g.link('bar', 'foo')
-        self.assertEquals(
-            exc.exception.message,
-            "Hub 'bar' is already connected to node 'foo'"
-        )
+        g.link('bar', 'foo')
+        self.assertEquals(g.links('foo'), set(['bar']))
+        self.assertEquals(g.hub_links('foo'), set(['bar']))
+        self.assertEquals(g.links('bar'), set(['foo']))
+        self.assertEquals(g.hub_links('bar'), set(['foo']))
 
     def test_remove_node_link(self):
         g = GraphBackend()
