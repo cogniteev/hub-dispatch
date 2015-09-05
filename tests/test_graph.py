@@ -5,36 +5,23 @@ from hub_dispatch import GraphBackend
 
 class TestGraph(unittest.TestCase):
     def test_empty_graph(self):
-        """ Test properties of an empty graph
-        """
+        """ Test properties of an empty graph """
         g = GraphBackend()
         self.assertEqual(g.hubs(), set())
         with self.assertRaises(Exception) as exc:
             g.unlink('foo', 'bar')
-        self.assertEqual(
-            exc.exception.message,
-            "Hub 'foo' does not exist"
-        )
+        self.assertEqual(exc.exception.message, "Hub 'foo' does not exist")
         with self.assertRaises(Exception) as exc:
             g.links('foo')
-        self.assertEqual(
-            exc.exception.message,
-            "Unknown node 'foo'"
-        )
+        self.assertEqual(exc.exception.message, "Unknown node 'foo'")
         with self.assertRaises(Exception) as exc:
             g.hub_links('foo')
-        self.assertEqual(
-            exc.exception.message,
-            "Hub 'foo' does not exist"
-        )
+        self.assertEqual(exc.exception.message, "Hub 'foo' does not exist")
         self.assertFalse(g.is_hub('foo'))
         # try to link an unknown hub to an unknown node
         with self.assertRaises(Exception) as exc:
             g.link('foo', 'bar')
-        self.assertEqual(
-            exc.exception.message,
-            "Hub 'foo' does not exist"
-        )
+        self.assertEqual(exc.exception.message, "Hub 'foo' does not exist")
 
     def test_add_hub(self):
         g = GraphBackend()
@@ -81,9 +68,6 @@ class TestGraph(unittest.TestCase):
         g = GraphBackend()\
             .add_hub('h1').add_hub('h2').add_hub('h3')\
             .link('h1', 'h2').link('h1', 'h3').link('h2', 'h3')
-        self.assertEqual(g.links('h1'), set(['h2', 'h3']))
-        self.assertEqual(g.links('h2'), set(['h1', 'h3']))
-        self.assertEqual(g.links('h3'), set(['h1', 'h2']))
         self.assertEqual(g.hub_links('h1'), set(['h2', 'h3']))
         self.assertEqual(g.hub_links('h2'), set(['h1', 'h3']))
         self.assertEqual(g.hub_links('h3'), set(['h1', 'h2']))
