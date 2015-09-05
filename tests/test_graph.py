@@ -71,23 +71,17 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(g.hub_links('h1'), set(['h2', 'h3']))
         self.assertEqual(g.hub_links('h2'), set(['h1', 'h3']))
         self.assertEqual(g.hub_links('h3'), set(['h1', 'h2']))
-        # unpromote a hub to a simple node
-        g.remove_hub('h1')
+        g.remove_hub('h1')  # unpromote a hub to a simple node
         self.assertFalse('h1' in g.hubs())
         self.assertEqual(g.links('h1'), set(['h2', 'h3']))
         self.assertEqual(g.links('h2'), set(['h1', 'h3']))
         self.assertEqual(g.links('h3'), set(['h1', 'h2']))
         with self.assertRaises(Exception) as exc:
             g.hub_links('h1')
-        self.assertEqual(
-            exc.exception.message,
-            "Hub 'h1' does not exist"
-        )
+        self.assertEqual(exc.exception.message, "Hub 'h1' does not exist")
         self.assertEqual(g.hub_links('h2'), set(['h1', 'h3']))
         self.assertEqual(g.hub_links('h3'), set(['h1', 'h2']))
-        # unpromote h2 to a simple node
-        g.unlink('h2', 'h1')
-        g.remove_hub('h2')
+        g.unlink('h2', 'h1').remove_hub('h2')  # unpromote h2 to a simple node
         self.assertFalse('h1' in g.hubs())
         self.assertFalse('h2' in g.hubs())
         self.assertTrue('h3' in g.hubs())
